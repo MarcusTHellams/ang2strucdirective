@@ -4,6 +4,6 @@
 <h2 *myNgIf="show">This is to be shown</h2>
 
 
-<div *bnLoop="let thing of myThings; let bob = first" (click)="removeAThing(thing)">
+<div *bnLoop="let thing from myThings to 20 step 1; let bob = first" (click)="removeAThing(thing)">
   {{thing}} {{bob}}
 </div>
