@@ -4,10 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
+import { MyNgIfDirective } from './my-ng-if.directive';
+import { BnLoopDirective } from './bn-loop.directive';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    MyNgIfDirective,
+    BnLoopDirective
   ],
   imports: [
     BrowserModule,
