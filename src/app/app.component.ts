@@ -9,4 +9,8 @@ export class AppComponent {
   title = 'app works!';
   show = false;
   killer = true;
+  myThings: Array<Number> = [1, 2, 3, 4, 5];
+  removeAThing(index: number) {
+    this.myThings.splice(index - 1);
+  }
 }

@@ -3,10 +3,7 @@
 </h1>
 <h2 *myNgIf="show">This is to be shown</h2>
 
-<!--<p *bnLoop="#i from lowerBound to upperBound step increment ; #first = first ; #last = last ;" [lifeCycleLabel]="i">
-  {{ i }}
-  <span *ngIf="first">- First</span>
-  <span *ngIf="last">- Last</span>
-</p>-->
 
-<!--<p *bnLoop="let i from 1 to 1 step 1; let first = first; let last = last;"></p>-->
+<div *bnLoop="let thing of myThings; let bob = first" (click)="removeAThing(thing)">
+  {{thing}} {{bob}}
+</div>
