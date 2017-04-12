@@ -9,4 +9,8 @@ export class AppComponent {
   title = 'app works!';
   show = false;
   killer = true;
+
+  lowerbound = 1;
+  upperbound = 20;
+  increment = 2;
 }

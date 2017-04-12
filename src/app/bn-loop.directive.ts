@@ -20,6 +20,8 @@ export class BnLoopDirective implements OnChanges {
   private _step: Number;
   private renderedRange: Array<any> = [];
   private renderedViews: Object = {};
+  private range: Array<number> = [];
+  private collection: any;
   private generateRange(from, to, step) {
     let range = [];
     // Incrementing range.
@@ -39,12 +41,11 @@ export class BnLoopDirective implements OnChanges {
   constructor(private viewContainer: ViewContainerRef, private templateRef: TemplateRef<any>) { }
 
   ngOnChanges(changes) {
-    this._step = 1;
-    let range = this.generateRange(this._from, this._to, this._step);
+    this.range = this.generateRange(this._from, this._to, this._step);
     let views = {};
 
-    for (let domIndex = 0, domLength = range.length; domIndex < domLength; domIndex++) {
-      let i = range[domIndex];
+    for (let domIndex = 0, domLength = this.range.length; domIndex < domLength; domIndex++) {
+      let i = this.range[domIndex];
       let existingViewRef = (this.renderedViews[i] && this.renderedViews[i].viewRef);
       views[i] = {
         index: i,
@@ -67,25 +68,18 @@ export class BnLoopDirective implements OnChanges {
     }
 
     // Finally, let's update existing views and render any new ones.
-    for (let domIndex = 0; domIndex < range.length; domIndex++) {
-      let i = range[domIndex];
+    for (let domIndex = 0; domIndex < this.range.length; domIndex++) {
+      let i = this.range[domIndex];
       let view = views[i];
       // If this view didn't pull an existing viewRef from the
       // previous range, let's create a new clone.
       if (!view.viewRef) {
-        view.viewRef = this.viewContainer.createEmbeddedView(this.templateRef, domIndex);
+        view.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
       }
       // Set up all the local variable bindings.
       // --
       // NOTE: The "$implicit" variable is the first #var in the
       // template syntax.
-
-      // view.viewRef.setLocal("$implicit", i);
-      // view.viewRef.setLocal("first", view.first);
-      // view.viewRef.setLocal("last", view.last);
-      // view.viewRef.setLocal("middle", view.middle);
-      // view.viewRef.setLocal("even", view.even);
-      // view.viewRef.setLocal("odd", view.odd);
 
       view.viewRef.context.$implicit = i;
       view.viewRef.context.first = view.first;
@@ -96,7 +90,7 @@ export class BnLoopDirective implements OnChanges {
     }
     // Store the new range configuration for comparison in the next
     // change event.
-    this.renderedRange = range;
+    this.renderedRange = this.range;
     this.renderedViews = views;
 
 

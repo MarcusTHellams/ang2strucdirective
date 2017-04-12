@@ -9,4 +9,22 @@
   <span *ngIf="last">- Last</span>
 </p>-->
 
-<!--<p *bnLoop="let i from 1 to 1 step 1; let first = first; let last = last;"></p>-->
+<p *bnLoop="let i from lowerbound to upperbound step increment; let first = first; let last = last; let middle = middle;">
+  <a href="javascript:void(0)" (click)="setFrom(i)">
+    {{i}}
+   <span *ngIf="first ">First</span>
+   <span *ngIf="last ">Last</span>
+   <span *ngIf="middle ">Middle</span>
+   
+   </a>
+</p>
+
+
+<!--<p *bnLoop="let i from lowerbound to upperbound step increment; let first = first; let last = last;">
+  <a href="javascript:void(0)" (click)="setTo(i)">
+    {{i}}
+   <span *ngIf="first ">First</span>
+   <span *ngIf="last ">Last</span>
+   
+   </a>
+</p>-->
