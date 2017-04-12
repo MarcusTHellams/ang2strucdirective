@@ -1,9 +1,9 @@
-import { Directive, OnChanges, ViewContainerRef, TemplateRef, Input, ElementRef } from '@angular/core';
+import { Directive, OnChanges, ViewContainerRef, TemplateRef, Input, ElementRef, DoCheck, IterableDiffer, IterableDiffers, ChangeDetectorRef, ViewRef } from '@angular/core';
 
 @Directive({
   selector: '[bnLoop]'
 })
-export class BnLoopDirective implements OnChanges {
+export class BnLoopDirective implements OnChanges, DoCheck {
   @Input('bnLoopFrom') set setFrom(number: Number) {
     this._from = number;
   };
@@ -15,6 +15,14 @@ export class BnLoopDirective implements OnChanges {
   @Input('bnLoopStep') set setStep(number: Number) {
     this._step = number;
   }
+
+  @Input('bnLoopSomethings') set setSomeThings(arr: Array<any>) {
+    this._someThings = arr;
+    if (arr && !this.differ) {
+      this.differ = this.differs.find(arr).create(null);
+    };
+  }
+
   private _from: Number;
   private _to: Number;
   private _step: Number;
@@ -22,6 +30,9 @@ export class BnLoopDirective implements OnChanges {
   private renderedViews: Object = {};
   private range: Array<number> = [];
   private collection: any;
+  private _someThings: Array<any> = [];
+  private differ: IterableDiffer<any>;
+  private viewMap: Map<any, ViewRef> = new Map<any, ViewRef>();
   private generateRange(from, to, step) {
     let range = [];
     // Incrementing range.
@@ -38,63 +49,85 @@ export class BnLoopDirective implements OnChanges {
     return (range);
   };
 
-  constructor(private viewContainer: ViewContainerRef, private templateRef: TemplateRef<any>) { }
+  constructor(private viewContainer: ViewContainerRef, private templateRef: TemplateRef<any>, private differs: IterableDiffers) { }
 
-  ngOnChanges(changes) {
-    this.range = this.generateRange(this._from, this._to, this._step);
-    let views = {};
+  ngDoCheck() {
+    console.log(this._someThings);
+    let newParams = [];
+    if (this.differ) {
+      const changes = this.differ.diff(this._someThings);
+      if (changes) {
+        console.log(changes);
+        // this.viewContainer.clear();
+        changes.forEachItem((change) => {
+          console.log(change);
+          newParams.push(change.item);
+        });
+        console.log(newParams);
+        this._from = newParams[0];
+        this._to = newParams[1];
+        this._step = newParams[2];
+        this.range = this.generateRange(this._from, this._to, this._step);
+        let views = {};
 
-    for (let domIndex = 0, domLength = this.range.length; domIndex < domLength; domIndex++) {
-      let i = this.range[domIndex];
-      let existingViewRef = (this.renderedViews[i] && this.renderedViews[i].viewRef);
-      views[i] = {
-        index: i,
-        viewRef: (existingViewRef || null),
-        first: (domIndex === 0),
-        last: (domIndex === (domLength - 1)),
-        middle: ((domIndex !== 0) && (domIndex !== (domLength - 1))),
-        even: !(i % 2),
-        odd: (i % 2)
-      };
-    }
+        for (let domIndex = 0, domLength = this.range.length; domIndex < domLength; domIndex++) {
+          let i = this.range[domIndex];
+          let existingViewRef = (this.renderedViews[i] && this.renderedViews[i].viewRef);
+          views[i] = {
+            index: i,
+            viewRef: (existingViewRef || null),
+            first: (domIndex === 0),
+            last: (domIndex === (domLength - 1)),
+            middle: ((domIndex !== 0) && (domIndex !== (domLength - 1))),
+            even: !(i % 2),
+            odd: (i % 2)
+          };
+        }
 
-    // Next, let's delete the views that are no longer relevant in
-    // new range.
-    for (let domIndex = 0; domIndex < this.renderedRange.length; domIndex++) {
-      let i = this.renderedRange[domIndex];
-      if (!views.hasOwnProperty(i)) {
-        this.viewContainer.remove(this.viewContainer.indexOf(this.renderedViews[i].viewRef));
+        // // Next, let's delete the views that are no longer relevant in
+        // // new range.
+        for (let domIndex = 0; domIndex < this.renderedRange.length; domIndex++) {
+          let i = this.renderedRange[domIndex];
+          if (!views.hasOwnProperty(i)) {
+            this.viewContainer.remove(this.viewContainer.indexOf(this.renderedViews[i].viewRef));
+          }
+        }
+
+        // Finally, let's update existing views and render any new ones.
+        for (let domIndex = 0; domIndex < this.range.length; domIndex++) {
+          let i = this.range[domIndex];
+          let view = views[i];
+          // If this view didn't pull an existing viewRef from the
+          // previous range, let's create a new clone.
+          if (!view.viewRef) {
+            view.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
+          }
+          // Set up all the local variable bindings.
+          // --
+          // NOTE: The "$implicit" variable is the first #var in the
+          // template syntax.
+
+          view.viewRef.context.$implicit = i;
+          view.viewRef.context.first = view.first;
+          view.viewRef.context.last = view.last;
+          view.viewRef.context.middle = view.middle;
+          view.viewRef.context.even = view.even;
+          view.viewRef.context.odd = view.odd;
+        }
+        // Store the new range configuration for comparison in the next
+        // change event.
+        this.renderedRange = this.range;
+        this.renderedViews = views;
+
+
+        //end of if changes
       }
+
+      //end of this.differ
     }
-
-    // Finally, let's update existing views and render any new ones.
-    for (let domIndex = 0; domIndex < this.range.length; domIndex++) {
-      let i = this.range[domIndex];
-      let view = views[i];
-      // If this view didn't pull an existing viewRef from the
-      // previous range, let's create a new clone.
-      if (!view.viewRef) {
-        view.viewRef = this.viewContainer.createEmbeddedView(this.templateRef);
-      }
-      // Set up all the local variable bindings.
-      // --
-      // NOTE: The "$implicit" variable is the first #var in the
-      // template syntax.
-
-      view.viewRef.context.$implicit = i;
-      view.viewRef.context.first = view.first;
-      view.viewRef.context.last = view.last;
-      view.viewRef.context.middle = view.middle;
-      view.viewRef.context.even = view.even;
-      view.viewRef.context.odd = view.odd;
-    }
-    // Store the new range configuration for comparison in the next
-    // change event.
-    this.renderedRange = this.range;
-    this.renderedViews = views;
-
-
-
+    //end of doCheck
   }
+
+  ngOnChanges(changes) { }
 
 }
